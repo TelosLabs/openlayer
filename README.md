@@ -5,11 +5,11 @@ Openlayer is a Ruby gem that provides a wrapper for the Openlayer HTTP API. It a
 ## Installation
 Install the gem and add to the application's Gemfile by executing:
 
-    $ bundle add "openlayer"
+    $ bundle add openlayer
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install "openlayer
+    $ gem install openlayer
 
 ## Usage
 
