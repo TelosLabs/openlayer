@@ -9,8 +9,8 @@ module Openlayer
       @inference_pipeline_id = inference_pipeline_id
     end
 
-    def stream_data(**attributes)
-      handle_response client.connection.post("inference-pipelines/#{inference_pipeline_id}/data-stream", attributes)
+    def stream_data(body = {})
+      handle_response client.connection.post("inference-pipelines/#{inference_pipeline_id}/data-stream", body)
       true
     end
 
