@@ -20,7 +20,6 @@ module Openlayer
         conn.request :authorization, "Bearer", api_key
         conn.request :json
         conn.response :json, content_type: "application/json"
-        conn.response :logger
         conn.adapter adapter, @stubs
       end
     end
