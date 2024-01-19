@@ -14,9 +14,9 @@ If bundler is not being used to manage dependencies, install the gem by executin
 ## Usage
 
 ```ruby
-client = OpenLayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
+client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
 inference_pipeline = client.inference_pipeline("YOUR_INFERENCE_PIPELINE_ID")
-inferencce_pipeline.stream_data(
+inference_pipeline.stream_data(
     {
         rows: [...],
         config: {...}
