@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "faraday/multipart"
 
 module Openlayer
   class Client
@@ -26,6 +27,10 @@ module Openlayer
 
     def inference_pipeline(inference_pipeline_id)
       InferencePipeline.new(self, inference_pipeline_id)
+    end
+
+    def development_pipeline(workspace_id, project_id, data_tarfile_path)
+      DevelopmentPipeline.new(self, workspace_id, project_id, data_tarfile_path)
     end
   end
 end

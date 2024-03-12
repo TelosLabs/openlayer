@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    openlayer (0.2.0)
+    openlayer (0.2.2)
       faraday (~> 2.9.0)
+      faraday-multipart
 
 GEM
   remote: https://rubygems.org/
@@ -11,10 +12,13 @@ GEM
     diff-lcs (1.5.0)
     faraday (2.9.0)
       faraday-net_http (>= 2.0, < 3.2)
+    faraday-multipart (1.0.4)
+      multipart-post (~> 2)
     faraday-net_http (3.1.0)
       net-http
     json (2.7.1)
     language_server-protocol (3.17.0.3)
+    multipart-post (2.4.0)
     net-http (0.4.1)
       uri
     parallel (1.24.0)
@@ -58,6 +62,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  arm64-darwin-22
 
 DEPENDENCIES
   openlayer!
