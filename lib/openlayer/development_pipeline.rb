@@ -3,7 +3,7 @@
 module Openlayer
   class DevelopmentPipeline
     attr_reader :client, :workspace_id, :project_id, :data_tarfile_path, 
-      :s3_presigned_body, :storageUri, :url
+      :s3_presigned_body
 
     def initialize(client, workspace_id, project_id, data_tarfile_path)
       @client = client
