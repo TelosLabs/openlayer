@@ -13,6 +13,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
+### Inference Monitoring Mode
 ```ruby
 client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
 inference_pipeline = client.inference_pipeline("YOUR_INFERENCE_PIPELINE_ID")
@@ -23,6 +24,28 @@ inference_pipeline.stream_data(
     }
 )
 ```
+
+### Development Mode for CI/CD
+```ruby
+client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
+development_pipeline = client.development_pipeline(
+  "YOUR_WORKSPACE_ID",
+  "YOUR_PROJECT_ID",
+  "YOUR_TARFILE_PATH"
+)
+
+development_pipeline.post_data("This is a commit message")
+```
+
+The tarfile must follow a specific directory format
+
+staging
+├── commit.yaml
+├── model
+│   └── model_config.yaml
+└── validation
+    ├── dataset.csv
+    └── dataset_config.yaml
 
 ## Development
 
