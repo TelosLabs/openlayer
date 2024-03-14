@@ -36,6 +36,8 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "example-gem", "~> 1.0"
   spec.add_dependency "faraday", "~> 2.9.0"
   spec.add_dependency "faraday-multipart"
+  spec.add_dependency "rubygems/package"
+  spec.add_dependency "zlib"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

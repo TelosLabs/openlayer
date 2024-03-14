@@ -30,15 +30,16 @@ inference_pipeline.stream_data(
 client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
 development_pipeline = client.development_pipeline(
   "YOUR_WORKSPACE_ID",
-  "YOUR_PROJECT_ID",
-  "YOUR_TARFILE_PATH"
+  "YOUR_PROJECT_ID"
 )
 
-development_pipeline.post_data("This is a commit message")
+development_pipeline.add_tarfile("TARFILE_PATH")
+development_pipeline.commit("This is a commit message")
+development_pipeline.push
 ```
 
 The tarfile must follow a specific directory format
-
+```
 staging
 ├── commit.yaml
 ├── model
@@ -46,6 +47,10 @@ staging
 └── validation
     ├── dataset.csv
     └── dataset_config.yaml
+```
+- `commit.yaml` contains the date and commit message, but this can be overwritten by a message during the push
+- All other items are self-explanatory, and an example is in `examples/staging`
+- Check the [Dataset Config](https://docs.openlayer.com/how-to-guides/write-dataset-configs/llm-dataset-config) and the [Model Config](https://docs.openlayer.com/how-to-guides/write-model-configs/llm-config) docs on Openlayer to see additional attributes for the configs.
 
 ## Development
 
