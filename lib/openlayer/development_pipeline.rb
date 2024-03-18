@@ -2,8 +2,8 @@
 
 module Openlayer
   class DevelopmentPipeline
-    attr_reader :client, :workspace_id, :project_id, :data_tarfile_path, 
-      :s3_presigned_body, :s3_client, :commit_message
+    attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
+                :s3_presigned_body, :s3_client, :commit_message
 
     REQUIRED_TARFILE_STRUCTURE = [
       "staging/commit.yaml",
@@ -16,21 +16,53 @@ module Openlayer
       @client = client
       @workspace_id = workspace_id
       @project_id = project_id
+      init_staging_dir
       init_s3_connection
     end
 
-    def add_tarfile(data_tarfile_path)
-      validate_tarfile(data_tarfile_path)
-      @data_tarfile_path = data_tarfile_path
+    def add_dataset(file_path, dataset_config, dataset_config_file_path)
+      if dataset_config.nil? && dataset_config_file_path.nil?
+        raise Error, "Dataset config or dataset config file path is required"
+      end
+
+      raise Error, "File path is required" if file_path.nil?
+
+      copy_file_to_staging(file_path, "validation/dataset.csv")
+      if !dataset_config_file_path.nil?
+        copy_file_to_staging(dataset_config_file_path, "validation/dataset_config.yaml")
+      else
+        write_hash_to_staging(dataset_config, "validation/dataset_config.yaml")
+      end
+    end
+
+    def add_model(model_config, model_config_file_path)
+      if model_config.nil? && model_config_file_path.nil?
+        raise Error, "Model config or model config file path is required"
+      end
+
+      if !model_config_file_path.nil?
+        copy_file_to_staging(model_config_file_path, "model/model_config.yaml")
+      else
+        write_hash_to_staging(model_config, "model/model_config.yaml")
+      end
     end
 
     def commit(message:)
-      stage_data
+      raise Error, "Commit message must be between 1 and 140 characters" if message.length > 140 || message.length < 1
+
       @commit_message = message
+      commit_hash = {
+        "date": commit_date,
+        "message": message
+      }
+      write_hash_to_staging(commit_hash, "commit.yaml")
     end
 
     def push
-      handle_response client.connection.post("projects/#{project_id}/versions", push_commit_payload)
+      tar_staging_data
+      push_staging_data_to_s3
+      version_body = handle_response client.connection.post("projects/#{project_id}/versions", push_commit_payload)
+      DevelopmentVersion.new(client, version_body.dig("commit", "projectVersionId"))
     end
 
     def restart_s3_connection
@@ -38,7 +70,17 @@ module Openlayer
     end
 
     private
-    
+
+    def init_staging_dir
+      Dir.mkdir("~/.openlayer/#{project_id}/staging") unless Dir.exist?("~/.openlayer/#{project_id}/staging")
+      unless Dir.exist?("~/.openlayer/#{project_id}/staging/validation")
+        Dir.mkdir("~/.openlayer/#{project_id}/staging/validation")
+      end
+      return if Dir.exist?("~/.openlayer/#{project_id}/staging/model")
+
+      Dir.mkdir("~/.openlayer/#{project_id}/staging/model")
+    end
+
     def init_s3_connection
       version = "0.1.0a25"
       objectName = "staging"
@@ -48,7 +90,28 @@ module Openlayer
       @s3_client = S3PresignedClient.new(s3_presigned_body)
     end
 
-    def stage_data
+    def copy_file_to_staging(file_path, destination)
+      system("cp #{file_path} ~/.openlayer/#{project_id}/staging/#{destination}")
+    end
+
+    def write_hash_to_staging(hash, destination)
+      File.open("~/.openlayer/#{project_id}/staging/#{destination}", "w") do |file|
+        file.write hash.to_yaml
+      end
+    end
+
+    def commit_date
+      current_time = DateTime.now
+      current_time.strftime("%a %b %d %H:%M:%S %Y")
+    end
+
+    def tar_staging_data
+      @data_tarfile_path = "~/.openlayer/#{project_id}_tarfile"
+      system("tar -cvzf #{tarfile_path} ~/.openlayer/#{project_id}/staging")
+      validate_tarfile(data_tarfile_path)
+    end
+
+    def push_staging_data_to_s3
       s3_client.post(staging_data_payload)
     end
 
@@ -61,7 +124,7 @@ module Openlayer
     def push_commit_payload
       payload = {
         "storageUri": s3_presigned_body["storageUri"],
-        "commit": {"message": commit_message}
+        "commit": { "message": commit_message }
       }
     end
 
@@ -83,7 +146,6 @@ module Openlayer
       else
         raise Error, message
       end
-      response
     end
 
     def validate_tarfile(data_tarfile_path)

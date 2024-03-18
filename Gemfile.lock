@@ -2,13 +2,16 @@ PATH
   remote: .
   specs:
     openlayer (0.2.2)
+      date
       faraday (~> 2.9.0)
       faraday-multipart
+      zlib
 
 GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
+    date (3.3.4)
     diff-lcs (1.5.0)
     faraday (2.9.0)
       faraday-net_http (>= 2.0, < 3.2)
@@ -59,6 +62,7 @@ GEM
     ruby-progressbar (1.13.0)
     unicode-display_width (2.5.0)
     uri (0.13.0)
+    zlib (3.1.0)
 
 PLATFORMS
   arm64-darwin-21

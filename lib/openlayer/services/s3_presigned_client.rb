@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Openlayer
   class S3PresignedClient
-
     attr_reader :presigned_url, :payload_fields, :s3_conn
 
     def initialize(presigned_url)
