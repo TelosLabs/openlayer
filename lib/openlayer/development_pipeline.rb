@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require "yaml"
+
 module Openlayer
   class DevelopmentPipeline
     attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
