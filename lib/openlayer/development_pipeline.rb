@@ -47,6 +47,11 @@ module Openlayer
       end
     end
 
+    def status
+      puts "Staging Area:"
+      system("ls -R #{project_path}/staging")
+    end
+
     def commit(message:)
       raise Error, "Commit message must be between 1 and 140 characters" if message.length > 140 || message.length < 1
 
@@ -61,7 +66,6 @@ module Openlayer
     def push
       tar_staging_data
       push_staging_data_to_s3
-      version_body = handle_response client.connection.post("projects/#{project_id}/versions", push_commit_payload)
       DevelopmentVersion.new(client, version_body.dig("commit", "projectVersionId"))
     end
 
@@ -121,6 +125,10 @@ module Openlayer
       {
         "file" => Faraday::Multipart::FilePart.new(data_tarfile_path, "application/x-tar")
       }
+    end
+
+    def version_body
+      handle_response client.connection.post("projects/#{project_id}/versions", push_commit_payload)
     end
 
     def push_commit_payload
