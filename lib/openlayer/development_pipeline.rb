@@ -6,10 +6,10 @@ module Openlayer
                 :s3_presigned_body, :s3_client, :commit_message
 
     REQUIRED_TARFILE_STRUCTURE = [
-      "staging/commit.yaml",
-      "staging/validation/dataset_config.yaml",
-      "staging/validation/dataset.csv",
-      "staging/model/model_config.yaml"
+      "./staging/commit.yaml",
+      "./staging/validation/dataset_config.yaml",
+      "./staging/validation/dataset.csv",
+      "./staging/model/model_config.yaml"
     ].freeze
 
     def initialize(client, workspace_id, project_id)
@@ -71,12 +71,16 @@ module Openlayer
 
     private
 
+    def project_path
+      "#{Dir.home}/.openlayer/#{project_id}"
+    end
+
     def init_staging_dir
       Dir.mkdir("#{Dir.home}/.openlayer") unless Dir.exist?("#{Dir.home}/.openlayer")
-      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}")
-      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging")
-      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging/validation") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging/validation")
-      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging/model") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging/model")      
+      Dir.mkdir("#{project_path}") unless Dir.exist?("#{project_path}")
+      Dir.mkdir("#{project_path}/staging") unless Dir.exist?("#{project_path}/staging")
+      Dir.mkdir("#{project_path}/staging/validation") unless Dir.exist?("#{project_path}/staging/validation")
+      Dir.mkdir("#{project_path}/staging/model") unless Dir.exist?("#{project_path}/staging/model")      
     end
 
     def init_s3_connection
@@ -89,11 +93,11 @@ module Openlayer
     end
 
     def copy_file_to_staging(file_path, destination)
-      system("cp #{file_path} #{Dir.home}/.openlayer/#{project_id}/staging/#{destination}")
+      system("cp #{file_path} #{project_path}/staging/#{destination}")
     end
 
     def write_hash_to_staging(hash, destination)
-      File.open("#{Dir.home}/.openlayer/#{project_id}/staging/#{destination}", "w") do |file|
+      File.open("#{project_path}/staging/#{destination}", "w") do |file|
         file.write hash.to_yaml
       end
     end
@@ -104,8 +108,8 @@ module Openlayer
     end
 
     def tar_staging_data
-      @data_tarfile_path = "#{Dir.home}/.openlayer/#{project_id}_tarfile"
-      system("tar -czf #{data_tarfile_path} #{Dir.home}/.openlayer/#{project_id}/staging")
+      @data_tarfile_path = "#{Dir.home}/.openlayer/#{project_id}_staging.tar"
+      system("tar -czf #{data_tarfile_path} -C #{project_path}/ .")
       validate_tarfile(data_tarfile_path)
     end
 
@@ -159,7 +163,7 @@ module Openlayer
       tarfile_structure = []
       begin
         Gem::Package::TarReader.new(Zlib::GzipReader.open(data_tarfile_path)).each do |entry|
-          tarfile_structure << (entry.full_name.sub("#{Dir.home.sub("/", "")}/.openlayer/#{project_id}/", ""))
+          tarfile_structure << entry.full_name
         end
       rescue Zlib::GzipFile::Error => e
         stacktrace = e.backtrace.join("\n")
