@@ -5,6 +5,7 @@ PATH
       date
       faraday (~> 2.9.0)
       faraday-multipart
+      yaml
       zlib
 
 GEM
@@ -62,6 +63,7 @@ GEM
     ruby-progressbar (1.13.0)
     unicode-display_width (2.5.0)
     uri (0.13.0)
+    yaml (0.3.0)
     zlib (3.1.0)
 
 PLATFORMS

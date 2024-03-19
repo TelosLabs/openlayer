@@ -33,23 +33,20 @@ development_pipeline = client.development_pipeline(
   "YOUR_PROJECT_ID"
 )
 
-development_pipeline.add_tarfile("TARFILE_PATH")
-development_pipeline.commit("This is a commit message")
-development_pipeline.push
+development_pipeline.add_dataset(file_path: "DATASET_FILE_PATH", dataset_config_file_path: "DATASET_CONFIG_FILE_PATH")
+development_pipeline.add_model(model_config_file_path: "MODEL_CONFIG_PATH")
+development_pipeline.commit(message: "This is a commit message")
+version = development_pipeline.push
+
+version.wait_for_completion(timeout: 500)
+version.print_test_report
+
+if version.failing_test_count > 0:
+    puts "Failing pipeline due to failing goals."
+    exit(1)
 ```
 
-The tarfile must follow a specific directory format
-```
-staging
-├── commit.yaml
-├── model
-│   └── model_config.yaml
-└── validation
-    ├── dataset.csv
-    └── dataset_config.yaml
-```
-- `commit.yaml` contains the date and commit message, but this can be overwritten by a message during the push
-- All other items are self-explanatory, and an example is in `examples/staging`
+- Check the example in `examples/staging` for what the YAMLs look like.
 - Check the [Dataset Config](https://docs.openlayer.com/how-to-guides/write-dataset-configs/llm-dataset-config) and the [Model Config](https://docs.openlayer.com/how-to-guides/write-model-configs/llm-config) docs on Openlayer to see additional attributes for the configs.
 
 ## Development

@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "faraday", "~> 2.9.0"
   spec.add_dependency "faraday-multipart"
   spec.add_dependency "zlib"
+  spec.add_dependency "yaml"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require "yaml"
 module Openlayer
   class DevelopmentPipeline
     attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
@@ -20,7 +20,7 @@ module Openlayer
       init_s3_connection
     end
 
-    def add_dataset(file_path, dataset_config, dataset_config_file_path)
+    def add_dataset(file_path:, dataset_config: nil, dataset_config_file_path: nil)
       if dataset_config.nil? && dataset_config_file_path.nil?
         raise Error, "Dataset config or dataset config file path is required"
       end
@@ -35,7 +35,7 @@ module Openlayer
       end
     end
 
-    def add_model(model_config, model_config_file_path)
+    def add_model(model_config: nil, model_config_file_path: nil)
       if model_config.nil? && model_config_file_path.nil?
         raise Error, "Model config or model config file path is required"
       end
@@ -72,13 +72,11 @@ module Openlayer
     private
 
     def init_staging_dir
-      Dir.mkdir("~/.openlayer/#{project_id}/staging") unless Dir.exist?("~/.openlayer/#{project_id}/staging")
-      unless Dir.exist?("~/.openlayer/#{project_id}/staging/validation")
-        Dir.mkdir("~/.openlayer/#{project_id}/staging/validation")
-      end
-      return if Dir.exist?("~/.openlayer/#{project_id}/staging/model")
-
-      Dir.mkdir("~/.openlayer/#{project_id}/staging/model")
+      Dir.mkdir("#{Dir.home}/.openlayer") unless Dir.exist?("#{Dir.home}/.openlayer")
+      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}")
+      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging")
+      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging/validation") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging/validation")
+      Dir.mkdir("#{Dir.home}/.openlayer/#{project_id}/staging/model") unless Dir.exist?("#{Dir.home}/.openlayer/#{project_id}/staging/model")      
     end
 
     def init_s3_connection
@@ -91,11 +89,11 @@ module Openlayer
     end
 
     def copy_file_to_staging(file_path, destination)
-      system("cp #{file_path} ~/.openlayer/#{project_id}/staging/#{destination}")
+      system("cp #{file_path} #{Dir.home}/.openlayer/#{project_id}/staging/#{destination}")
     end
 
     def write_hash_to_staging(hash, destination)
-      File.open("~/.openlayer/#{project_id}/staging/#{destination}", "w") do |file|
+      File.open("#{Dir.home}/.openlayer/#{project_id}/staging/#{destination}", "w") do |file|
         file.write hash.to_yaml
       end
     end
@@ -106,8 +104,8 @@ module Openlayer
     end
 
     def tar_staging_data
-      @data_tarfile_path = "~/.openlayer/#{project_id}_tarfile"
-      system("tar -cvzf #{tarfile_path} ~/.openlayer/#{project_id}/staging")
+      @data_tarfile_path = "#{Dir.home}/.openlayer/#{project_id}_tarfile"
+      system("tar -czf #{data_tarfile_path} #{Dir.home}/.openlayer/#{project_id}/staging")
       validate_tarfile(data_tarfile_path)
     end
 
@@ -161,7 +159,7 @@ module Openlayer
       tarfile_structure = []
       begin
         Gem::Package::TarReader.new(Zlib::GzipReader.open(data_tarfile_path)).each do |entry|
-          tarfile_structure << entry.full_name
+          tarfile_structure << (entry.full_name.sub("#{Dir.home.sub("/", "")}/.openlayer/#{project_id}/", ""))
         end
       rescue Zlib::GzipFile::Error => e
         stacktrace = e.backtrace.join("\n")
