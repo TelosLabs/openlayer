@@ -2,6 +2,18 @@
 
 module Openlayer
   class Project
+    class MissingFilePath < StandardError; end
+    class MissingDatasetConfig < StandardError
+      def message
+        "Dataset config or dataset config file path is required"
+      end
+    end
+    class CommitLengthError < StandardError
+      def message
+        "Commit message must be between 1 and 140 characters"
+      end
+    end
+
     attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
                 :s3_presigned_body, :s3_client, :commit_message
 
@@ -12,6 +24,8 @@ module Openlayer
       "./staging/model/model_config.yaml"
     ].freeze
 
+    COMMIT_LENGTH = (1..140).freeze
+
     def initialize(client, workspace_id, project_id)
       @client = client
       @workspace_id = workspace_id
@@ -21,14 +35,11 @@ module Openlayer
     end
 
     def add_dataset(file_path:, dataset_config: nil, dataset_config_file_path: nil)
-      if dataset_config.nil? && dataset_config_file_path.nil?
-        raise Error, "Dataset config or dataset config file path is required"
-      end
-
-      raise Error, "File path is required" if file_path.nil?
+      raise MissingFilePath if file_path.blank?
+      raise MissingDatasetConfig if dataset_config.blank? && dataset_config_file_path.blank?
 
       copy_file_to_staging(file_path, "validation/dataset.csv")
-      if !dataset_config_file_path.nil?
+      if !dataset_config_file_path.blank?
         copy_file_to_staging(dataset_config_file_path, "validation/dataset_config.yaml")
       else
         write_hash_to_staging(dataset_config, "validation/dataset_config.yaml")
@@ -36,11 +47,11 @@ module Openlayer
     end
 
     def add_model(model_config: nil, model_config_file_path: nil)
-      if model_config.nil? && model_config_file_path.nil?
+      if model_config.blank? && model_config_file_path.blank?
         raise Error, "Model config or model config file path is required"
       end
 
-      if !model_config_file_path.nil?
+      if !model_config_file_path.blank?
         copy_file_to_staging(model_config_file_path, "model/model_config.yaml")
       else
         write_hash_to_staging(model_config, "model/model_config.yaml")
@@ -53,7 +64,7 @@ module Openlayer
     end
 
     def commit(message:)
-      raise Error, "Commit message must be between 1 and 140 characters" if message.length > 140 || message.length < 1
+      raise CommitLengthError unless COMMIT_LENGTH.include? message.length
 
       @commit_message = message
       commit_hash = {
