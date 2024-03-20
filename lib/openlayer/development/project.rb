@@ -84,7 +84,7 @@ module Openlayer
       Dir.mkdir("#{project_path}") unless Dir.exist?("#{project_path}")
       Dir.mkdir("#{project_path}/staging") unless Dir.exist?("#{project_path}/staging")
       Dir.mkdir("#{project_path}/staging/validation") unless Dir.exist?("#{project_path}/staging/validation")
-      Dir.mkdir("#{project_path}/staging/model") unless Dir.exist?("#{project_path}/staging/model")      
+      Dir.mkdir("#{project_path}/staging/model") unless Dir.exist?("#{project_path}/staging/model")
     end
 
     def init_s3_connection
@@ -142,7 +142,7 @@ module Openlayer
       message = response.body["error"]
       case response.status
       when 200
-        return response.body
+        response.body
       when 401
         raise Error, message
       when 404
@@ -152,7 +152,7 @@ module Openlayer
       when 500
         raise Error, message
       when 200..299
-        return response.body
+        response.body
       else
         raise Error, message
       end

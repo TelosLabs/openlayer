@@ -15,7 +15,10 @@ RSpec.describe Openlayer::Project do
     end
 
     it "raises an error if dataset_config and dataset_config_file_path are nil" do
-      expect { project.add_dataset(file_path: file_path) }.to raise_error(Openlayer::Error, "Dataset config or dataset config file path is required")
+      expect do
+        project.add_dataset(file_path: file_path)
+      end.to raise_error(Openlayer::Error,
+                         "Dataset config or dataset config file path is required")
     end
   end
 
@@ -23,7 +26,9 @@ RSpec.describe Openlayer::Project do
     let(:model_config) { { "name" => "model" } }
 
     it "raises an error if model_config and model_config_file_path are nil" do
-      expect { project.add_model }.to raise_error(Openlayer::Error, "Model config or model config file path is required")
+      expect do
+        project.add_model
+      end.to raise_error(Openlayer::Error, "Model config or model config file path is required")
     end
   end
 
@@ -31,11 +36,16 @@ RSpec.describe Openlayer::Project do
     let(:message) { "commit message" }
 
     it "raises an error if the message is longer than 140 characters" do
-      expect { project.commit(message: "a" * 141) }.to raise_error(Openlayer::Error, "Commit message must be between 1 and 140 characters")
+      expect do
+        project.commit(message: "a" * 141)
+      end.to raise_error(Openlayer::Error,
+                         "Commit message must be between 1 and 140 characters")
     end
 
     it "raises an error if the message is shorter than 1 character" do
-      expect { project.commit(message: "") }.to raise_error(Openlayer::Error, "Commit message must be between 1 and 140 characters")
+      expect do
+        project.commit(message: "")
+      end.to raise_error(Openlayer::Error, "Commit message must be between 1 and 140 characters")
     end
   end
 
@@ -50,7 +60,6 @@ RSpec.describe Openlayer::Project do
       expect(project.commit_date).to eq(Time.now.strftime("%Y-%m-%d"))
     end
   end
-
 
   describe "#push" do
     let(:response) { double("response", status: 200, body: { "message" => "success" }) }
