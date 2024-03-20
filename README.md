@@ -28,15 +28,15 @@ inference_pipeline.stream_data(
 ### Development Mode for CI/CD
 ```ruby
 client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
-development_pipeline = client.development_pipeline(
+project = client.create_or_load_project(
   "YOUR_WORKSPACE_ID",
   "YOUR_PROJECT_ID"
 )
 
-development_pipeline.add_dataset(file_path: "DATASET_FILE_PATH", dataset_config_file_path: "DATASET_CONFIG_FILE_PATH")
-development_pipeline.add_model(model_config_file_path: "MODEL_CONFIG_PATH")
-development_pipeline.commit(message: "This is a commit message")
-version = development_pipeline.push
+project.add_dataset(file_path: "DATASET_FILE_PATH", dataset_config_file_path: "DATASET_CONFIG_FILE_PATH")
+project.add_model(model_config_file_path: "MODEL_CONFIG_PATH")
+project.commit(message: "This is a commit message")
+version = project.push
 
 version.wait_for_completion(timeout: 500)
 version.print_test_report
