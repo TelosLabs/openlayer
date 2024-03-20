@@ -29,8 +29,8 @@ module Openlayer
       InferencePipeline.new(self, inference_pipeline_id)
     end
 
-    def development_pipeline(workspace_id, project_id)
-      DevelopmentPipeline.new(self, workspace_id, project_id)
+    def create_or_load_project(workspace_id, project_id)
+      Project.new(self, workspace_id, project_id)
     end
   end
 end

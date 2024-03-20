@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Openlayer
-  class DevelopmentVersion
+  class Version
     attr_reader :client, :project_version_id, :version_body
 
     def initialize(client, project_version_id)

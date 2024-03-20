@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Openlayer
-  class DevelopmentPipeline
+  class Project
     attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
                 :s3_presigned_body, :s3_client, :commit_message
 
@@ -66,7 +66,7 @@ module Openlayer
     def push
       tar_staging_data
       push_staging_data_to_s3
-      DevelopmentVersion.new(client, version_body.dig("commit", "projectVersionId"))
+      Version.new(client, version_body.dig("commit", "projectVersionId"))
     end
 
     def restart_s3_connection
