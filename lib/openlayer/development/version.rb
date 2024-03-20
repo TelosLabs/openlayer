@@ -49,7 +49,6 @@ module Openlayer
       start_time = Time.now
       while Time.now - start_time < timeout
         refresh
-        puts version_body
         break if status == "completed" || status == "failed"
 
         sleep interval
