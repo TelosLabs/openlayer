@@ -5,9 +5,11 @@ require_relative "openlayer/version"
 module Openlayer
   autoload :Client, "openlayer/client"
   autoload :Error, "openlayer/error"
+  autoload :Object, "openlayer/object"
   autoload :InferencePipeline, "openlayer/inference_pipeline"
-  autoload :Project, "openlayer/development/project"
   autoload :Version, "openlayer/development/version"
   autoload :S3PresignedClient, "openlayer/services/s3_presigned_client"
-  # Your code goes here...
+
+  # Classes used to return a nicer object wrapping the response data
+  autoload :Project, "openlayer/objects/project"
 end

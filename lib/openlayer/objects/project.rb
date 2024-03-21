@@ -1,21 +1,18 @@
 # frozen_string_literal: true
+require 'fileutils'
+require 'find'
 
 module Openlayer
-  class Project
-    class MissingFilePath < StandardError; end
-    class MissingDatasetConfig < StandardError
-      def message
-        "Dataset config or dataset config file path is required"
-      end
-    end
+  class Project < Object
     class CommitLengthError < StandardError
       def message
         "Commit message must be between 1 and 140 characters"
       end
     end
 
-    attr_reader :client, :workspace_id, :project_id, :data_tarfile_path,
-                :s3_presigned_body, :s3_client, :commit_message
+    attr_reader :client, :workspace_id, :project_id,
+                :data_tarfile_path,:s3_presigned_body, :s3_client,
+                :commit_message
 
     REQUIRED_TARFILE_STRUCTURE = [
       "./staging/commit.yaml",
@@ -26,41 +23,39 @@ module Openlayer
 
     COMMIT_LENGTH = (1..140).freeze
 
-    def initialize(client, workspace_id, project_id)
+    def self.from_response(client, response)
+      attributes_first_project = handle_response(response)&.dig("items")&.first
+      raise Error, "Project not found" if attributes_first_project.nil?
+
+      new(client, attributes_first_project)
+    end
+
+    def initialize(client, attributes)
       @client = client
-      @workspace_id = workspace_id
-      @project_id = project_id
-      init_staging_dir
-      init_s3_connection
+      super(attributes)
+      init_staging_directories
     end
 
-    def add_dataset(file_path:, dataset_config: nil, dataset_config_file_path: nil)
-      raise MissingFilePath if file_path.blank?
-      raise MissingDatasetConfig if dataset_config.blank? && dataset_config_file_path.blank?
-
-      copy_file_to_staging(file_path, "validation/dataset.csv")
-      if !dataset_config_file_path.blank?
-        copy_file_to_staging(dataset_config_file_path, "validation/dataset_config.yaml")
-      else
-        write_hash_to_staging(dataset_config, "validation/dataset_config.yaml")
-      end
+    def add_dataset(file_path:, dataset_config:, dataset_config_file_path:)
+      copy_file(file_path, "staging/validation/dataset.csv")
+      copy_or_create_config(dataset_config,
+        dataset_config_file_path,
+        "staging/validation/dataset_config.yaml"
+      )
     end
 
-    def add_model(model_config: nil, model_config_file_path: nil)
-      if model_config.blank? && model_config_file_path.blank?
-        raise Error, "Model config or model config file path is required"
-      end
-
-      if !model_config_file_path.blank?
-        copy_file_to_staging(model_config_file_path, "model/model_config.yaml")
-      else
-        write_hash_to_staging(model_config, "model/model_config.yaml")
-      end
+    def add_model(model_config:, model_config_file_path:)
+      copy_or_create_config(model_config,
+        model_config_file_path,
+        "staging/model/model_config.yaml"
+      )
     end
 
     def status
       puts "Staging Area:"
-      system("ls -R #{project_path}/staging")
+      Find.find(File.join(project_path, "/staging")) do |path|
+        puts path if File.file?(path)
+      end
     end
 
     def commit(message:)
@@ -68,10 +63,10 @@ module Openlayer
 
       @commit_message = message
       commit_hash = {
-        "date": commit_date,
+        "date": DateTime.now.strftime("%a %b %d %H:%M:%S %Y"),
         "message": message
       }
-      write_hash_to_staging(commit_hash, "commit.yaml")
+      write_hash_to_file(commit_hash, "staging/commit.yaml")
     end
 
     def push
@@ -90,36 +85,33 @@ module Openlayer
       "#{Dir.home}/.openlayer/#{project_id}"
     end
 
-    def init_staging_dir
-      Dir.mkdir("#{Dir.home}/.openlayer") unless Dir.exist?("#{Dir.home}/.openlayer")
-      Dir.mkdir("#{project_path}") unless Dir.exist?("#{project_path}")
-      Dir.mkdir("#{project_path}/staging") unless Dir.exist?("#{project_path}/staging")
-      Dir.mkdir("#{project_path}/staging/validation") unless Dir.exist?("#{project_path}/staging/validation")
-      Dir.mkdir("#{project_path}/staging/model") unless Dir.exist?("#{project_path}/staging/model")
+    def init_staging_directories
+      FileUtils.mkdir_p(File.join(project_path, 'staging'))
+      FileUtils.mkdir_p(File.join(project_path, 'staging/validation'))
+      FileUtils.mkdir_p(File.join(project_path, 'staging/model'))
     end
 
-    def init_s3_connection
-      version = "0.1.0a25"
-      objectName = "staging"
-      @s3_presigned_body = handle_response client.connection.post(
-        "storage/presigned-url?objectName=#{objectName}&workspaceId=#{workspace_id}&version=#{version}"
-      )
-      @s3_client = S3PresignedClient.new(s3_presigned_body)
+    def copy_or_create_config(dataset_config, dataset_config_file_path, destination)
+      if dataset_config_file_path.nil?
+        copy_file(dataset_config_file_path, destination)
+      else
+        write_hash_to_file(dataset_config, destination)
+      end
     end
 
-    def copy_file_to_staging(file_path, destination)
-      system("cp #{file_path} #{project_path}/staging/#{destination}")
+    def copy_file(file_path, destination)
+      FileUtils.copy(file_path, File.join(project_path, destination))
     end
 
-    def write_hash_to_staging(hash, destination)
-      File.open("#{project_path}/staging/#{destination}", "w") do |file|
+    def write_hash_to_file(hash, destination)
+      File.open(File.join(project_path, destination), "w") do |file|
         file.write hash.to_yaml
       end
     end
 
-    def commit_date
-      current_time = DateTime.now
-      current_time.strftime("%a %b %d %H:%M:%S %Y")
+    def init_s3_connection
+      @s3_presigned_body = client.presigned_url(workspace_id: workspace_id, object_name: "staging")
+      @s3_client = S3PresignedClient.new(s3_presigned_body)
     end
 
     def tar_staging_data
@@ -147,6 +139,26 @@ module Openlayer
         "storageUri": s3_presigned_body["storageUri"],
         "commit": { "message": commit_message }
       }
+    end
+
+    def self.handle_response(response)
+      message = response.body["error"]
+      case response.status
+      when 200
+        response.body
+      when 401
+        raise Error, message
+      when 404
+        raise Error, message
+      when 422
+        raise Error, message
+      when 500
+        raise Error, message
+      when 200..299
+        response.body
+      else
+        raise Error, message
+      end
     end
 
     def handle_response(response)
