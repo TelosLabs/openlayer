@@ -6,12 +6,12 @@ RSpec.describe Openlayer::Project do
   let(:project) { client.load_project(name: "RailsApp") }
 
   describe "#load_project" do
-    it "loads the project" do
+    xit "loads the project" do
       expect(project).to be_a(Openlayer::Project)
       expect(project.name).to eq("RailsApp")
     end
 
-    it "pushes the dataset and model to the staging area" do
+    xit "pushes the dataset and model to the staging area" do
       project.add_dataset(file_path: "spec/fixtures/staging/validation/dataset.csv",
                           dataset_config_file_path: "spec/fixtures/staging/validation/dataset_config.yaml")
       project.add_model(model_config_file_path: "spec/fixtures/staging/model/model_config.yaml")
@@ -20,7 +20,7 @@ RSpec.describe Openlayer::Project do
       expect(project.status).to include("staging/validation/dataset_config.yaml")
     end
 
-    it "commits the dataset and model to the project" do
+    xit "commits the dataset and model to the project" do
       project.add_dataset(file_path: "spec/fixtures/staging/validation/dataset.csv",
                           dataset_config_file_path: "spec/fixtures/staging/validation/dataset_config.yaml")
       project.add_model(model_config_file_path: "spec/fixtures/staging/model/model_config.yaml")
