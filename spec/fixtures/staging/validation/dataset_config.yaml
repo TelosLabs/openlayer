@@ -1,8 +1,8 @@
 columnNames:
   - input
   - output
-  - language
-  - attackType
+  - ground_truth
+groundTruthColumnName: ground_truth
 inputVariableNames:
   - input
 label: validation

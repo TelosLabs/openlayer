@@ -11,7 +11,7 @@ module Openlayer
 
     def self.create_tar_from_folders(folders, tar_file_name)
       File.open(tar_file_name, "wb") do |file|
-        Gem::Package::TarWriter.new(file) do |tar|
+        Gem::Package::TarWriter.new(Zlib::GzipWriter.open(file)) do |tar|
           folders.each do |folder|
             base_name = File.basename(folder)
             add_directory_to_tar(tar, folder, base_name)

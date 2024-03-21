@@ -22,10 +22,10 @@ module Openlayer
                 :commit_message, :project_path
 
     REQUIRED_TARFILE_STRUCTURE = [
-      "./staging/commit.yaml",
-      "./staging/validation/dataset_config.yaml",
-      "./staging/validation/dataset.csv",
-      "./staging/model/model_config.yaml"
+      "staging/commit.yaml",
+      "staging/validation/dataset_config.yaml",
+      "staging/validation/dataset.csv",
+      "staging/model/model_config.yaml"
     ].freeze
 
     COMMIT_LENGTH = (1..140).freeze
