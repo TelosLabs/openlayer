@@ -46,7 +46,6 @@ module Openlayer
 
     private
 
-
     def self.handle_response(response)
       message = response.body["error"]
       case response.status
