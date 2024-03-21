@@ -50,9 +50,10 @@ version = project.push
 version.wait_for_completion(timeout: 500)
 version.print_test_report
 
-if version.failing_test_count > 0:
-    puts "Failing pipeline due to failing goals."
-    exit(1)
+if version.failing_test_count > 0
+  puts "Failing pipeline due to failing goals."
+  exit(1)
+end
 ```
 
 - Check the example in `examples/staging` for what the YAMLs look like.
