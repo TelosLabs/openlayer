@@ -19,7 +19,7 @@ RSpec.describe Openlayer::InferencePipeline do
 
     it "sends a POST request to the correct endpoint with the given attributes" do
       expect(client).to receive_message_chain(:connection, :post).with(
-        "inference-pipelines/#{inference_pipeline_id}/data-stream", body: attributes
+        "inference-pipelines/#{inference_pipeline_id}/data-stream", **attributes
       )
       pipeline.stream_data(**attributes)
     end
