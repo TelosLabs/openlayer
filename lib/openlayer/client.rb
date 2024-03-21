@@ -30,6 +30,10 @@ module Openlayer
       )
     end
 
+    def load_project_version(id:, payload: {})
+      ProjectVersion.from_response self, connection.post("projects/#{id}/versions", payload)
+    end
+
     def connection
       @connection ||= Faraday.new do |conn|
         conn.url_prefix = BASE_URL

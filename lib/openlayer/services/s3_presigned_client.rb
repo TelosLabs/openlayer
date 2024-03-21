@@ -27,7 +27,7 @@ module Openlayer
       message = response.body["error"]
       case response.status
       when 200
-        return response.body
+        return response
       when 401
         raise Error, message
       when 404
@@ -37,7 +37,7 @@ module Openlayer
       when 500
         raise Error, message
       when 200..299
-        return response.body
+        return response
       else
         raise Error, message
       end

@@ -1,33 +1,18 @@
 # frozen_string_literal: true
 
 module Openlayer
-  class Version
-    attr_reader :client, :project_version_id, :version_body
+  class ProjectVersion < Object
+    attr_reader :client, :project_version_id, :all_attributes_hash
 
-    def initialize(client, project_version_id)
+    def self.from_response(client, response)
+      attributes = handle_response(response)
+      new(client, attributes)
+    end
+
+    def initialize(client, attributes)
       @client = client
-      @project_version_id = project_version_id
-      refresh
-    end
-
-    def status
-      version_body.fetch("status")
-    end
-
-    def status_message
-      version_body.fetch("statusMessage")
-    end
-
-    def failing_test_count
-      version_body.fetch("failingGoalCount")
-    end
-
-    def passing_test_count
-      version_body.fetch("passingGoalCount")
-    end
-
-    def total_test_count
-      version_body.fetch("totalGoalCount")
+      super(attributes)
+      @project_version_id = commit.projectVersionId
     end
 
     def print_status_report
@@ -41,8 +26,8 @@ module Openlayer
       puts "Total Test Count: #{total_test_count}"
     end
 
-    def to_dict
-      version_body
+    def to_h
+      @attributes.to_h
     end
 
     def wait_for_completion(timeout: 300, interval: 10)
@@ -56,13 +41,30 @@ module Openlayer
     end
 
     def refresh
-      get_version
+      @attributes = OpenStruct.new handle_response client.connection.get("versions/#{project_version_id}")
     end
 
     private
 
-    def get_version
-      @version_body = handle_response client.connection.get("versions/#{project_version_id}")
+
+    def self.handle_response(response)
+      message = response.body["error"]
+      case response.status
+      when 200
+        response.body
+      when 401
+        raise Error, message
+      when 404
+        raise Error, message
+      when 422
+        raise Error, message
+      when 500
+        raise Error, message
+      when 200..299
+        response.body
+      else
+        raise Error, message
+      end
     end
 
     def handle_response(response)

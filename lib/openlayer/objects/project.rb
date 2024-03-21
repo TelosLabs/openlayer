@@ -2,18 +2,24 @@
 
 require "fileutils"
 require "find"
+require "yaml"
+require "pry"
 
 module Openlayer
   class Project < Object
+    class Error < StandardError; end
+    class NotFoundError < StandardError; end
+    class TarFileNotFoundError < StandardError; end
+
     class CommitLengthError < StandardError
       def message
         "Commit message must be between 1 and 140 characters"
       end
     end
 
-    attr_reader :client, :workspace_id, :project_id,
-                :data_tarfile_path, :s3_presigned_body, :s3_client,
-                :commit_message
+    attr_reader :client, :workspace_id,
+                :data_tarfile_path, :s3_presigned_body,
+                :commit_message, :project_path
 
     REQUIRED_TARFILE_STRUCTURE = [
       "./staging/commit.yaml",
@@ -26,7 +32,7 @@ module Openlayer
 
     def self.from_response(client, response)
       attributes_first_project = handle_response(response)&.dig("items")&.first
-      raise Error, "Project not found" if attributes_first_project.nil?
+      raise NotFoundError if attributes_first_project.nil?
 
       new(client, attributes_first_project)
     end
@@ -34,17 +40,23 @@ module Openlayer
     def initialize(client, attributes)
       @client = client
       super(attributes)
+      @data_tarfile_path = "#{Dir.home}/.openlayer/#{id}_staging.tar"
+      @project_path = "#{Dir.home}/.openlayer/#{id}"
       init_staging_directories
     end
 
-    def add_dataset(file_path:, dataset_config:, dataset_config_file_path:)
+    def add_dataset(file_path:, dataset_config: nil, dataset_config_file_path: nil)
+      raise ArgumentError, "dataset config is required" if dataset_config.nil? && dataset_config_file_path.nil?
+
       copy_file(file_path, "staging/validation/dataset.csv")
       copy_or_create_config(dataset_config,
                             dataset_config_file_path,
                             "staging/validation/dataset_config.yaml")
     end
 
-    def add_model(model_config:, model_config_file_path:)
+    def add_model(model_config: nil, model_config_file_path: nil)
+      raise ArgumentError, "model config is required" if model_config.nil? && model_config_file_path.nil?
+
       copy_or_create_config(model_config,
                             model_config_file_path,
                             "staging/model/model_config.yaml")
@@ -57,7 +69,7 @@ module Openlayer
       end
     end
 
-    def commit(message:)
+    def commit(message)
       raise CommitLengthError unless COMMIT_LENGTH.include? message.length
 
       @commit_message = message
@@ -69,20 +81,13 @@ module Openlayer
     end
 
     def push
-      tar_staging_data
-      push_staging_data_to_s3
-      Version.new(client, version_body.dig("commit", "projectVersionId"))
-    end
-
-    def restart_s3_connection
-      init_s3_connection
+      create_and_validate_tar_file
+      s3_client = create_s3_client
+      s3_client.post(s3_payload)
+      client.load_project_version(id: id, payload: version_payload)
     end
 
     private
-
-    def project_path
-      "#{Dir.home}/.openlayer/#{project_id}"
-    end
 
     def init_staging_directories
       FileUtils.mkdir_p(File.join(project_path, "staging"))
@@ -90,11 +95,11 @@ module Openlayer
       FileUtils.mkdir_p(File.join(project_path, "staging/model"))
     end
 
-    def copy_or_create_config(dataset_config, dataset_config_file_path, destination)
-      if dataset_config_file_path.nil?
-        copy_file(dataset_config_file_path, destination)
+    def copy_or_create_config(config_hash, config_file_path, destination)
+      if config_file_path.nil?
+        write_hash_to_file(config_hash, destination)
       else
-        write_hash_to_file(dataset_config, destination)
+        copy_file(config_file_path, destination)
       end
     end
 
@@ -108,32 +113,29 @@ module Openlayer
       end
     end
 
-    def init_s3_connection
+    def create_s3_client
       @s3_presigned_body = client.presigned_url(workspace_id: workspace_id, object_name: "staging")
-      @s3_client = S3PresignedClient.new(s3_presigned_body)
+      S3PresignedClient.new(s3_presigned_body)
     end
 
-    def tar_staging_data
-      @data_tarfile_path = "#{Dir.home}/.openlayer/#{project_id}_staging.tar"
-      system("tar -czf #{data_tarfile_path} -C #{project_path}/ .")
+    def create_and_validate_tar_file
+      TarFileHelper.create_tar_from_folders([File.join(project_path, "staging")], data_tarfile_path)
       validate_tarfile(data_tarfile_path)
     end
 
-    def push_staging_data_to_s3
-      s3_client.post(staging_data_payload)
+    def validate_tarfile(file_path)
+      raise TarFileNotFoundError unless File.exist?(file_path)
+
+      TarFileHelper.validate_structure(file_path, REQUIRED_TARFILE_STRUCTURE)
     end
 
-    def staging_data_payload
+    def s3_payload
       {
         "file" => Faraday::Multipart::FilePart.new(data_tarfile_path, "application/x-tar")
       }
     end
 
-    def version_body
-      handle_response client.connection.post("projects/#{project_id}/versions", push_commit_payload)
-    end
-
-    def push_commit_payload
+    def version_payload
       {
         "storageUri": s3_presigned_body["storageUri"],
         "commit": { "message": commit_message }
@@ -177,32 +179,6 @@ module Openlayer
         response.body
       else
         raise Error, message
-      end
-    end
-
-    def validate_tarfile(data_tarfile_path)
-      validate_tarfile_exists(data_tarfile_path)
-      validate_tarfile_structure(data_tarfile_path)
-    end
-
-    def validate_tarfile_exists(data_tarfile_path)
-      raise Error, "File not found" unless File.exist?(data_tarfile_path)
-    end
-
-    def validate_tarfile_structure(data_tarfile_path)
-      tarfile_structure = []
-      begin
-        Gem::Package::TarReader.new(Zlib::GzipReader.open(data_tarfile_path)).each do |entry|
-          tarfile_structure << entry.full_name
-        end
-      rescue Zlib::GzipFile::Error => e
-        stacktrace = e.backtrace.join("\n")
-        LOGGER.error("ERROR: #{e.message}\n #{stacktrace}")
-        return nil
-      end
-
-      REQUIRED_TARFILE_STRUCTURE.each do |required_file|
-        raise Error, "Missing file: #{required_file}" unless tarfile_structure.include?(required_file)
       end
     end
   end
