@@ -1,6 +1,7 @@
 # frozen_string_literal: true
-require 'fileutils'
-require 'find'
+
+require "fileutils"
+require "find"
 
 module Openlayer
   class Project < Object
@@ -11,7 +12,7 @@ module Openlayer
     end
 
     attr_reader :client, :workspace_id, :project_id,
-                :data_tarfile_path,:s3_presigned_body, :s3_client,
+                :data_tarfile_path, :s3_presigned_body, :s3_client,
                 :commit_message
 
     REQUIRED_TARFILE_STRUCTURE = [
@@ -39,16 +40,14 @@ module Openlayer
     def add_dataset(file_path:, dataset_config:, dataset_config_file_path:)
       copy_file(file_path, "staging/validation/dataset.csv")
       copy_or_create_config(dataset_config,
-        dataset_config_file_path,
-        "staging/validation/dataset_config.yaml"
-      )
+                            dataset_config_file_path,
+                            "staging/validation/dataset_config.yaml")
     end
 
     def add_model(model_config:, model_config_file_path:)
       copy_or_create_config(model_config,
-        model_config_file_path,
-        "staging/model/model_config.yaml"
-      )
+                            model_config_file_path,
+                            "staging/model/model_config.yaml")
     end
 
     def status
@@ -86,9 +85,9 @@ module Openlayer
     end
 
     def init_staging_directories
-      FileUtils.mkdir_p(File.join(project_path, 'staging'))
-      FileUtils.mkdir_p(File.join(project_path, 'staging/validation'))
-      FileUtils.mkdir_p(File.join(project_path, 'staging/model'))
+      FileUtils.mkdir_p(File.join(project_path, "staging"))
+      FileUtils.mkdir_p(File.join(project_path, "staging/validation"))
+      FileUtils.mkdir_p(File.join(project_path, "staging/model"))
     end
 
     def copy_or_create_config(dataset_config, dataset_config_file_path, destination)

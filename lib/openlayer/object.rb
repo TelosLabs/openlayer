@@ -10,7 +10,7 @@ module Openlayer
       attribute.is_a?(Hash) ? self.class.new(attribute) : attribute
     end
 
-    def respond_to_missing?(method, include_private = false)
+    def respond_to_missing?(_method, _include_private = false)
       true
     end
   end

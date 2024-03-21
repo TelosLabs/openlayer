@@ -25,8 +25,9 @@ module Openlayer
 
     def presigned_url(object_name: nil, workspace_id: nil)
       version = "0.1.0a25"
-      handle_response self.connection.post(
-        "storage/presigned-url?objectName=staging", presigned_url_params(object_name: object_name, workspace_id: workspace_id)
+      handle_response connection.post(
+        "storage/presigned-url?objectName=staging", presigned_url_params(object_name: object_name,
+                                                                         workspace_id: workspace_id)
       )
     end
 
@@ -47,7 +48,7 @@ module Openlayer
     end
 
     def presigned_url_params(object_name: nil, workspace_id: nil)
-      { "objectName": object_name, "workspaceId": workspace_id, version: "0.1.0a25"}.compact
+      { "objectName": object_name, "workspaceId": workspace_id, version: "0.1.0a25" }.compact
     end
 
     def handle_response(response)

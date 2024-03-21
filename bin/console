@@ -9,4 +9,3 @@ require "pry"
 
 client = Openlayer::Client.new(api_key: ENV.fetch("OPENLAYER_API_KEY"))
 Pry.start(binding)
-
