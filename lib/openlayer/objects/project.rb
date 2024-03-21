@@ -134,7 +134,7 @@ module Openlayer
     end
 
     def push_commit_payload
-      payload = {
+      {
         "storageUri": s3_presigned_body["storageUri"],
         "commit": { "message": commit_message }
       }

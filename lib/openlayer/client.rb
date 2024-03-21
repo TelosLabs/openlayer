@@ -24,7 +24,6 @@ module Openlayer
     end
 
     def presigned_url(object_name: nil, workspace_id: nil)
-      version = "0.1.0a25"
       handle_response connection.post(
         "storage/presigned-url?objectName=staging", presigned_url_params(object_name: object_name,
                                                                          workspace_id: workspace_id)
