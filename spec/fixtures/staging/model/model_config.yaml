@@ -1,0 +1,12 @@
+architectureType: llm
+inputVariableNames:
+  - input
+metadata: {}
+model: gpt-3.5-turbo-0125
+modelParameters:
+  temperature: 0.65
+modelProvider: OpenAI
+modelType: api
+name: AI assistant
+prompt: 
+  - {"role": "user", "content": "{{ input }}"}

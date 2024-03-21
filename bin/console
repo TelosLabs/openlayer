@@ -3,11 +3,9 @@
 
 require "bundler/setup"
 require "openlayer"
-
+require "pry"
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
 
-Openlayer::Client.new(api_key: "api_key")
-
-require "irb"
-IRB.start(__FILE__)
+client = Openlayer::Client.new(api_key: ENV.fetch("OPENLAYER_API_KEY"))
+Pry.start(binding)

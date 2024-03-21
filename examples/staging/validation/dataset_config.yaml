@@ -1,0 +1,12 @@
+columnNames:
+  - input
+  - output
+  - ground_truth
+groundTruthColumnName: ground_truth
+inputVariableNames:
+  - input
+label: validation
+language: en
+metadata: {}
+outputColumnName: output
+sep: ","

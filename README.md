@@ -13,6 +13,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
+### Inference Monitoring Mode
 ```ruby
 client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
 inference_pipeline = client.inference_pipeline("YOUR_INFERENCE_PIPELINE_ID")
@@ -23,6 +24,39 @@ inference_pipeline.stream_data(
     }
 )
 ```
+
+
+
+### Projects
+#### Load Project
+Loads an existing project from the Openlayer platform.
+
+```ruby
+client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
+project = client.load_project(name: "your_project_name")
+```
+
+#### Development Mode for CI/CD
+```ruby
+client = Openlayer::Client.new(api_key: "YOUR_OPENLAYER_API_KEY")
+project = client.load_project(name: "your_project_name")
+
+
+project.add_dataset(file_path: "DATASET_FILE_PATH", dataset_config_file_path: "DATASET_CONFIG_FILE_PATH")
+project.add_model(model_config_file_path: "MODEL_CONFIG_PATH")
+project.commit(message: "This is a commit message")
+version = project.push
+
+version.wait_for_completion(timeout: 500)
+version.print_test_report
+
+if version.failing_test_count > 0:
+    puts "Failing pipeline due to failing goals."
+    exit(1)
+```
+
+- Check the example in `examples/staging` for what the YAMLs look like.
+- Check the [Dataset Config](https://docs.openlayer.com/how-to-guides/write-dataset-configs/llm-dataset-config) and the [Model Config](https://docs.openlayer.com/how-to-guides/write-model-configs/llm-config) docs on Openlayer to see additional attributes for the configs.
 
 ## Development
 
