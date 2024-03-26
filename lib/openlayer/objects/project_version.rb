@@ -21,9 +21,9 @@ module Openlayer
     end
 
     def print_test_report
-      puts "Failing Test Count: #{failing_test_count}"
-      puts "Passing Test Count: #{passing_test_count}"
-      puts "Total Test Count: #{total_test_count}"
+      puts "Failing Test Count: #{failing_goal_count}"
+      puts "Passing Test Count: #{passing_goal_count}"
+      puts "Total Test Count: #{total_goal_count}"
     end
 
     def to_h
@@ -42,6 +42,18 @@ module Openlayer
 
     def refresh
       @attributes = OpenStruct.new handle_response client.connection.get("versions/#{project_version_id}")
+    end
+
+    def failing_test_count
+      failing_goal_count
+    end
+
+    def passing_test_count
+      passing_goal_count
+    end
+
+    def total_test_count
+      total_goal_count
     end
 
     private
