@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openlayer (0.2.2)
+    openlayer (0.3.0)
       date
       faraday (~> 2.9.0)
       faraday-multipart

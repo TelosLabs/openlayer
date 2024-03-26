@@ -4,10 +4,6 @@ module Openlayer
   class ProjectVersion < Object
     attr_reader :client, :project_version_id, :all_attributes_hash
 
-    alias :failing_test_count :failing_goal_count
-    alias :passing_test_count :passing_goal_count
-    alias :total_test_count :total_goal_count
-
     def self.from_response(client, response)
       attributes = handle_response(response)
       new(client, attributes)
@@ -46,6 +42,18 @@ module Openlayer
 
     def refresh
       @attributes = OpenStruct.new handle_response client.connection.get("versions/#{project_version_id}")
+    end
+
+    def failing_test_count
+      failing_goal_count
+    end
+
+    def passing_test_count
+      passing_goal_count
+    end
+
+    def total_test_count
+      total_goal_count
     end
 
     private
